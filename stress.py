@@ -5,11 +5,11 @@ from rich.live import Live
 from rich.table import Table
 from rich.console import Console
 
-url = input("🌐 Ingresá la URL a testear (ej: https://tuservidor.com/api): ").strip()
+url = input("🌐 Ingresa la URL a testear (ej: https://page.com/api): ").strip()
 
 # Configuración
-TOTAL_REQUESTS = 1000
-CONCURRENT_TASKS = 100
+TOTAL_REQUESTS = 10000
+CONCURRENT_TASKS = 50
 
 metrics = {
     "success": 0,
