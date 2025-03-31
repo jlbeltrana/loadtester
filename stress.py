@@ -6,10 +6,8 @@ from rich.table import Table
 from rich.console import Console
 
 url = input("🌐 Ingresa la URL a testear (ej: https://page.com/api): ").strip()
-
-# Configuración
-TOTAL_REQUESTS = 10000
-CONCURRENT_TASKS = 50
+TOTAL_REQUESTS = int(input("🔢 Total de requests (ej: 1000): ").strip())
+CONCURRENT_TASKS = int(input("⚙️  Nivel de concurrencia (ej: 100): ").strip())
 
 metrics = {
     "success": 0,
