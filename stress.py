@@ -1,21 +1,32 @@
 import asyncio
 import aiohttp
 import time
+import csv
 from rich.live import Live
 from rich.table import Table
 from rich.console import Console
 
+def obtener_entrada(mensaje, tipo=int):
+    while True:
+        try:
+            valor = tipo(input(mensaje).strip())
+            if tipo == int and valor <= 0:
+                raise ValueError("El valor debe ser mayor a 0.")
+            return valor
+        except ValueError as e:
+            console.print(f"[red]Entrada inválida:[/red] {e}")
+
+console = Console()
+
 url = input("🌐 Ingresa la URL a testear (ej: https://page.com/api): ").strip()
-TOTAL_REQUESTS = int(input("🔢 Total de requests (ej: 1000): ").strip())
-CONCURRENT_TASKS = int(input("⚙️  Nivel de concurrencia (ej: 100): ").strip())
+TOTAL_REQUESTS = obtener_entrada("🔢 Total de requests (ej: 1000): ")
+CONCURRENT_TASKS = obtener_entrada("⚙️  Nivel de concurrencia (ej: 100): ")
 
 metrics = {
     "success": 0,
     "errors": 0,
     "response_times": [],
 }
-
-console = Console()
 
 async def fetch(session, i):
     inicio = time.time()
@@ -27,8 +38,12 @@ async def fetch(session, i):
             else:
                 metrics["errors"] += 1
             metrics["response_times"].append(duracion)
-    except Exception:
+    except aiohttp.ClientError as e:
         metrics["errors"] += 1
+        console.print(f"[red]Error en la request {i}: {e}[/red]")
+    except asyncio.TimeoutError:
+        metrics["errors"] += 1
+        console.print(f"[red]Timeout en la request {i}[/red]")
 
 async def worker(queue, session):
     while not queue.empty():
@@ -50,12 +65,25 @@ def generar_tabla():
 
     return table
 
+def guardar_resultados_csv():
+    with open("resultados.csv", "w", newline="") as csvfile:
+        fieldnames = ["Métrica", "Valor"]
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+        writer.writeheader()
+        total = metrics["success"] + metrics["errors"]
+        avg_time = sum(metrics["response_times"]) / len(metrics["response_times"]) if metrics["response_times"] else 0
+        writer.writerow({"Métrica": "Requests Totales", "Valor": total})
+        writer.writerow({"Métrica": "Exitosos", "Valor": metrics["success"]})
+        writer.writerow({"Métrica": "Errores", "Valor": metrics["errors"]})
+        writer.writerow({"Métrica": "Tiempo Promedio", "Valor": f"{avg_time:.3f}s"})
+
 async def main():
     queue = asyncio.Queue()
     for i in range(TOTAL_REQUESTS):
         queue.put_nowait(i)
 
-    async with aiohttp.ClientSession() as session:
+    async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
         tasks = [asyncio.create_task(worker(queue, session)) for _ in range(CONCURRENT_TASKS)]
         
         # Actualizar tabla en paralelo mientras los workers corren
@@ -65,6 +93,9 @@ async def main():
                 await asyncio.sleep(0.5)
             await asyncio.gather(*tasks)
             live.update(generar_tabla())  # Actual final
+
+    guardar_resultados_csv()
+    console.print("[green]Resultados guardados en 'resultados.csv'[/green]")
 
 if __name__ == "__main__":
     asyncio.run(main())
