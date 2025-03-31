@@ -30,7 +30,7 @@ sudo docker run --pull always -it --rm jlbeltrana/loadtester:latest
 
 ## Ejemplo interactivo
 
-🌐 Ingresá la URL a testear (ej: https://tuservicio.com/api): https://api.midominio.com/health
+🌐 Ingresa la URL a testear (ej: https://page.com/api): https://api.midominio.com/health
 🔢 Total de requests (ej: 1000): 500
 ⚙️  Nivel de concurrencia (ej: 100): 50
 
