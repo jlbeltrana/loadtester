@@ -23,7 +23,7 @@ Este contenedor ejecuta un script en Python que:
 
 ## 🐳 Uso con Docker
 
-Podés ejecutarlo directamente sin necesidad de clonar el repo:
+Puedes ejecutarlo directamente sin necesidad de clonar el repo:
 
 ```bash
 sudo docker run --pull always -it --rm jlbeltrana/loadtester:latest
